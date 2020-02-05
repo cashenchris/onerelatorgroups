@@ -1,6 +1,6 @@
 import networkx as nx
-import automaticgroups as ag
-import smallcancellation as sc
+import automaticgroups.automaticgroups as ag
+import smallcancellation.smallcancellation as sc
 import freegroups.freegroup as fg
 import freegroups.whiteheadgraph as wg
 import pexpect
