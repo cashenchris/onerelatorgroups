@@ -26,12 +26,26 @@ def certify_hyperbolicity(relator,reportreason=False,**kwargs):
 
     If reportreason=True output additionally contains string with name of the method certifying hyperbolicity, or None is all tests are inconclusive.
     tryhard=2 will make kbmag retry several times with random orderings of the generators if the first attempt fails.
+
+
+    >>> certify_hyperbolicity([1,2,3],reportreason=True)
+    (True, 'free')
+    >>> certify_hyperbolicity('bbb',reportreason=True)
+    (True, 'torsion')
+    >>> certify_hyperbolicity([1,2,-1,-2,3,4,-3,-4],reportreason=True)
+    (True, 'cyclically pinched')
+    >>> certify_hyperbolicity('abcabcdeDEdeDE',reportreason=True)
+    (False, 'cyclically pinched')
+    >>> certify_hyperbolicity('CCBBCAAbbcaa',reportreason=True)
+    (True, 'walrus')
     """
     def format_return(result,reason):
         if reportreason:
             return result,reason
         else:
             return result
+    if not relator:
+        return format_return(True,'free')
     F,r1=fg.parseinputword(relator)
     if 'is_minimal' in kwargs and kwargs["is_minimal"]: # input relator guaranteed to be Whitehead minimal
         r2=r1
