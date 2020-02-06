@@ -27,58 +27,42 @@ def certify_hyperbolicity(relator,reportreason=False,**kwargs):
     If reportreason=True output additionally contains string with name of the method certifying hyperbolicity, or None is all tests are inconclusive.
     tryhard=2 will make kbmag retry several times with random orderings of the generators if the first attempt fails.
     """
+    def format_return(result,reason):
+        if reportreason:
+            return result,reason
+        else:
+            return result
     F,r1=fg.parseinputword(relator)
     if 'is_minimal' in kwargs and kwargs["is_minimal"]: # input relator guaranteed to be Whitehead minimal
         r2=r1
     else: # find a Whitehead minimal element in the same automorphism orbit of the relator
         r2=wg.whitehead_minimal_representative(r1)
     if len(r2)<=1:
-        if reportreason:
-            return 1,'free'
-        else:
-            return 1
+        return format_return(True,'free')
     if F.degree(r2)>1:# one-relator groups with torsion are hyperbolic
-        if reportreason:
-            return 1,'torsion'
-        else:
-            return 1
+        return format_return(True,'torsion')
     # Check if relarot is cyclically pinched
     (m,n)=is_cyclically_pinched(r2,reportpowers=True)
     if m is not None:
         if m>1 and n>1:
-            if reportreason:
-                return -1,'cyclically pinched'
-            else:
-                return -1
+            return format_return(False,'cyclically pinched')
         else:
-            if reportreason:
-                return 1, 'cyclically pinched'
-            else:
-                return 1
+            return format_return(True, 'cyclically pinched')
     # Try Ivanov-Scupp criteria, always gives an answer if some generator appears at most 3 times
     if 'verbose' in kwargs and kwargs["verbose"]:
         print "Checking Ivanov-Schupp criteria."
-    ISresult=IvanovSchupp(r2)
-    if ISresult != 0:
-        if reportreason:
-            return ISresult,'Ivanov Schupp'
-        else:
-            return ISresult
+    ISresult=IvanovSchupp(r2,reportreason=False)
+    if ISresult is not None:
+        return format_return(ISresult,'Ivanov Schupp')
     if 'verbose' in kwargs and kwargs["verbose"]:
         print "Ivanonv-Schupp does not apply."
     # check if relator defines small cancellation presentation
     Cprime=sc.Cprime([r2])
     if sc.smallcancellation([r2],Cprime):
-        if reportreason:
-            return 1,'small cancellation'
-        else:
-            return 1
-    # additionally check Blufstein-Minian condition
+        return format_return(True,'small cancellation')
+    # check Blufstein-Minian condition
     if BlufsteinMinian(r2,Cprime):
-        if reportreason:
-            return 1,'Blufstein Minian'
-        else:
-            return 1
+        return format_return(True,'Blufstein Minian')
     if 'verbose' in kwargs and kwargs["verbose"]:
         print "Not small cancellation."
     # try GAP with walrus
@@ -104,31 +88,19 @@ def certify_hyperbolicity(relator,reportreason=False,**kwargs):
         else:
             walrus=checkhyperbolicitywithwalrus(r2.letters,gap=None,gapfreegroupname=gapfreegroupname,gapprompt=gapprompt,theparameter=walrusparameter)
         if walrus:
-            if reportreason:
-                return 1,'walrus'
-            else:
-                return 1
+            return format_return(True,'walrus')
         if 'verbose' in kwargs and kwargs["verbose"]:
             print "walrus failed."
     # try kbmag
     if 'kb' in kwargs and kwargs['kb']==False:
-        if reportreason:
-            return 0,None
-        else:
-            return 0
+        return format_return(None,None)
     if 'verbose' in kwargs and kwargs["verbose"]:
         print "Trying kbmag"
     autandhyp=ag.certify_hyperbolicity(r2(),**kwargs)
     if autandhyp:
-        if reportreason:
-            return 1,'kbmag'
-        else:
-            return 1
+        return format_return(True,'kbmag')
     else: # all tests inconclusive
-        if reportreason:
-            return 0, None
-        else:
-            return 0
+        return format_return(None, None)
 
 
 def is_cyclically_pinched(relator,reportwords=False,reportpowers=False):
@@ -225,71 +197,67 @@ def BlufsteinMinianTprime(relator):
 def IvanovSchupp(relator,reportreason=False):
     """
     Check if one-relator group defined by input relator is hyperbolic according to Ivanov and Schupp criteria.
-    Returns 1 if group is known hyperbolic, -1 if known not hyperbolic, 0 if inconclusive
+    Returns True if group is known hyperbolic, False if known not hyperbolic, None if inconclusive
 
     >>> IvanovSchupp('',reportreason=True)
-    (1, 'free')
+    (True, 'free')
     >>> IvanovSchupp('a',reportreason=True)
-    (1, 'free')
+    (True, 'free')
     >>> IvanovSchupp('aa',reportreason=True)
-    (1, 'torsion')
+    (True, 'torsion')
     >>> IvanovSchupp('abaCBC',reportreason=True)
-    (-1, 'Thm3(1)')
+    (False, 'Thm3(1)')
     >>> IvanovSchupp('ababcbc',reportreason=True)
-    (1, 'Thm3(1)')
+    (True, 'Thm3(1)')
     >>> IvanovSchupp('abbAbcBC',reportreason=True)
-    (1, 'Thm3(2)')
+    (True, 'Thm3(2)')
     >>> IvanovSchupp('bcBCCBAcbCBcbCBabc',reportreason=True)
-    (-1, 'Thm3(2a)')
+    (False, 'Thm3(2a)')
     >>> IvanovSchupp('acaacacaacacaacbAAB',reportreason=True)
-    (-1, 'Thm3(2b)')
+    (False, 'Thm3(2b)')
     >>> IvanovSchupp('ababbacb',reportreason=True)
-    (1, 'Thm3(3)')
+    (True, 'Thm3(3)')
     >>> IvanovSchupp('ababaccBCbccBCbb',reportreason=True)
-    (-1, 'Thm3(3a)')
+    (False, 'Thm3(3a)')
     >>> IvanovSchupp('abaBcbCCBcbCCbaccBCbccBCbb',reportreason=True)
-    (-1, 'Thm3(3b)')
+    (False, 'Thm3(3b)')
     >>> IvanovSchupp('abaccBCbbaBcbCCb',reportreason=True)
-    (-1, 'Thm3(3c)')
+    (False, 'Thm3(3c)')
     >>> IvanovSchupp('abaBcbCCbaBcbCCBcbCCb',reportreason=True)
-    (-1, 'Thm3(3d)')
+    (False, 'Thm3(3d)')
     >>> IvanovSchupp('ababbcBCbcBCbcBCBAcbCB',reportreason=True)
-    (1, 'Thm3(4)')
+    (True, 'Thm3(4)')
     >>> IvanovSchupp('ababbcBCBAcbCB',reportreason=True)
-    (-1, 'Thm3(4a)')
+    (False, 'Thm3(4a)')
     >>> IvanovSchupp('ababbcBCbcBCBAcbCB',reportreason=True)
-    (-1, 'Thm3(4b)')
+    (False, 'Thm3(4b)')
     >>> IvanovSchupp('ababcabccabcbcbcbcabcbcbcbcbc',reportreason=True)
-    (1, 'Thm4')
+    (True, 'Thm4')
     >>> IvanovSchupp('abacabcabCbc',reportreason=True)
-    (-1, 'Thm4(3)')
+    (False, 'Thm4(3)')
     >>> IvanovSchupp('ababcBCababccc',reportreason=True)
-    (0, None)
+    (None, None)
     >>> IvanovSchupp('aaaaabbbbbccccc',reportreason=True)
-    (0, None)
+    (None, None)
     """
-    if not relator:
+    def format_return(result,reason):
         if reportreason:
-            return 1,'free'
+            return result,reason
         else:
-            return 1
+            return result
+    if not relator:
+        return format_return(True,'free')
     F,r1=fg.parseinputword(relator)
     r2=F.cyclic_reduce(r1)
-    if F.degree(r2)>1:
-        if reportreason:
-            return 1,'torsion'
-        else:
-            return 1 # one-relator groups with torsion are hyperbolic
+    if F.degree(r2)>1:# one-relator groups with torsion are hyperbolic
+        return format_return(True,'torsion')
     # Try Ivanov-Schupp criteria
     for a in range(1,1+F.rank):
         acount=[abs(x) for x in r2.letters].count(a)
         if acount==0: # neither theorem applies, check next a
             continue
         elif acount==1: # relator is primitive
-            if reportreason:
-                return 1, 'free'
-            else:
-                return 1
+            return format_return(True, 'free')
         # Ivanov-Schupp Theorem 3 applies when acount=2 or 3
         elif acount==2: 
             if r2.letters.count(a)==0:
@@ -306,34 +274,19 @@ def IvanovSchupp(relator,reportreason=False):
                 else:
                     C=F.word([])
                 if F.degree(B*C**(-1))>1:
-                    if reportreason:
-                        return -1,'Thm3(1)'
-                    else: 
-                        return -1 # group is not hyperbolic
+                    return format_return(False,'Thm3(1)')
                 else:
-                    if reportreason:
-                        return 1,'Thm3(1)'
-                    else:
-                        return 1 # group is hyperbolic
+                    return format_return(True,'Thm3(1)')
             else: # Ivanov-Schupp Thm 3 case (2)
                 nexta=1+therel[1:].index(-a)
                 B=F.word(therel[1:nexta])
                 C=F.word(therel[nexta+1:]) # no index error here since word is cyclically reduced
                 if F.degree(B)>1 and F.degree(C)>1:
-                    if reportreason:
-                        return -1,'Thm3(2b)'
-                    else:
-                        return -1 # group is not hyperbolic by case (2b)
-                elif F.is_conjugate_into(B,C) or F.is_conjugate_into(C,B):
-                    if reportreason:
-                        return -1,'Thm3(2a)'
-                    else:
-                        return -1 # group is not hyperbolic by case (2a), simplified because by previous case we know either B or C is not a proper power
+                    return format_return(False,'Thm3(2b)')
+                elif F.is_conjugate_into(B,C) or F.is_conjugate_into(C,B):# group is not hyperbolic by case (2a), simplified because by previous case we know either B or C is not a proper power
+                    return format_return(False,'Thm3(2a)')
                 else:
-                    if reportreason:
-                        return 1,'Thm3(2)'
-                    else:
-                        return 1 # group is hyperbolic
+                    return format_return(True,'Thm3(2)')
         elif acount==3:
             if r2.letters.count(-a)>r2.letters.count(a):
                 therel=(r2**(-1)).letters
@@ -360,25 +313,13 @@ def IvanovSchupp(relator,reportreason=False):
                     n2=-n2
                 if Z1==Z2 or Z1==F.word([]) or Z2==F.word([]):
                     if abs(n1)==abs(n2):
-                        if reportreason:
-                            return -1,'Thm3(4a)'
-                        else:
-                            return -1 # group is not hyperbolic by Thm 3 (4a)
+                        return format_return(False,'Thm3(4a)')
                     elif n1==-2*n2 or n2==-2*n1:
-                        if reportreason:
-                            return -1,'Thm3(4b)'
-                        else:
-                            return -1 #group is not hyperbolic by Thm 3 (4b)
+                        return format_return(False,'Thm3(4b)')
                     else:
-                        if reportreason:
-                            return 1,'Thm3(4)'
-                        else:
-                            return 1 # group is hyperbolic by Thm 3 (4)
+                        return format_return(True,'Thm3(4)')
                 else:
-                    if reportreason:
-                        return 1,'Thm3(4)'
-                    else:
-                        return 1 # group is hyperbolic by Thm 3 (4)
+                    return format_return(True,'Thm3(4)')
             else: # Theorem 3 case (3)
                 therel=therel[therel.index(a):]+therel[:therel.index(a)]
                 firsta=0
@@ -397,35 +338,17 @@ def IvanovSchupp(relator,reportreason=False):
                     n2=-n2
                 if Z1==Z2 or Z1==F.word([]) or Z2==F.word([]):
                     if (n1==0 and abs(n2)>1) or (n2==0 and abs(n1)>1):
-                        if reportreason:
-                            return -1,'Thm3(3a)'
-                        else:
-                            return -1 # group is not hyperbolic by Thm 3 (3a)
+                        return format_return(False,'Thm3(3a)')
                     elif abs(n1)==abs(n2) and abs(n1)>1:
-                        if reportreason:
-                            return -1,'Thm3(3b)'
-                        else:
-                            return -1 # group is not hyperbolic by Thm 3 (3b)
+                        return format_return(False,'Thm3(3b)')
                     elif n1!=0 and n1==-n2:
-                        if reportreason:
-                            return -1,'Thm3(3c)'
-                        else:
-                            return -1 # groups is not hyperbolic by Thm 3 (3c)
+                        return format_return(False,'Thm3(3c)')
                     elif n1!=0 and (n1==2*n2 or n2==2*n1):
-                        if reportreason:
-                            return -1,'Thm3(3d)'
-                        else:
-                            return -1 # group is not hyperbolic by Thm 3 (3d)
+                        return format_return(False,'Thm3(3d)')
                     else:
-                        if reportreason:
-                            return 1,'Thm3(3)'
-                        else:
-                            return 1 # group is hyperbolic by Thm 3 (3)
+                        return format_return(True,'Thm3(3)')
                 else:
-                    if reportreason:
-                        return 1,'Thm3(3)'
-                    else:
-                        return 1 #group is hyperbolic by Thm 3 (3)
+                    return format_return(True,'Thm3(3)')
         else: # Theorem 3 does not apply. Theorem 4 applies to some words with higher acount. Need all a's same sign plus some other conditions.
             therel=r2.letters
             if therel.count(a)==0: # there are no a's, but we know there are some a's or a^-1's, so the inverse must have some a's
@@ -444,31 +367,20 @@ def IvanovSchupp(relator,reportreason=False):
                     if i==len(R)-1:
                         T.append(F.word(currentword))
                 if len(T)==len(set(T)): #intermediate words are distinct, so theorem 4 applies
-                    if R.letters.count(a)>4: # The group is hyperbolic
-                        if reportreason:
-                            return 1,'Thm4'
-                        else:
-                            return 1
+                    if R.letters.count(a)>4:
+                        return format_return(True,'Thm4')
                     else: # check Ivanov-Schupp Thm 4 case (3)
                         assert(R.letters.count(a)==4) # if it were fewer we should have caught this in the theorem 3 part above
                         for i in range(4):
-                            if T[i%4]*T[(i+1)%4]**(-1)*T[(i+2)%4]*T[(i+3)%4]**(-1)==F.word([]): # The group is not hyperbolic
-                                if reportreason:
-                                    return -1,'Thm4(3)'
-                                else:
-                                    return -1
-                        else: # The group is hyperbolic
-                            if reportreason:
-                                return 1,'Thm4'
-                            else:
-                                return 1
+                            if T[i%4]*T[(i+1)%4]**(-1)*T[(i+2)%4]*T[(i+3)%4]**(-1)==F.word([]): 
+                                return format_return(False,'Thm4(3)')
+                        else: 
+                            return format_return(True,'Thm4')
             else: # Theorem 4 does not apply with this a.
                 pass
     # Ivanov-Schupp does not apply
-    if reportreason:
-        return 0,None
-    else:
-        return 0
+    return format_return(None,None)
+
 
    
 

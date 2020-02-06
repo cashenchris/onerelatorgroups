@@ -5,13 +5,13 @@ def sapirspakulovacondition(relator):
     """
     Checks Sapir-Spakulova condition to see if one relator group with given relator is embeddable in an ascending HNN extension of a free group (hence is residually finite). 
 
-    Returns 1 if yes, -1 if no, or 0 if numerical accuracy is insufficient to decide.
+    Returns True, False, or None if numerical accuracy is insufficient to decide.
     Input relator should be a list of nonzero integers corresponding to a freely reduced word in the free group where positive i represents the i-th basis element and -i represents its inverse.
 
     >>> sapirspakulovacondition([1,2,-1,-2,-2])
-    1
+    True
     >>> sapirspakulovacondition([1,2,2,-1,-2,-2,-2])
-    -1
+    False
     """
     tr=traces(relator)
     tracevector=tr[0][-1]
@@ -20,14 +20,14 @@ def sapirspakulovacondition(relator):
     ambiguous=False
     for i in range(1,1+max(abs(x) for x in relator)):
         result=touching(tr[i],tracevector)
-        if result == 1:
-            return 1
-        elif result == 0: # numerically ambiguous if there is a touching hyperplane for this i, but continue checking other i in case one of them gives a definitive positive answer.
+        if result == True:
+            return True
+        elif result == None: # numerically ambiguous if there is a touching hyperplane for this i, but continue checking other i in case one of them gives a definitive positive answer.
             ambiguous=True
     if ambiguous: # We didn't find any i for which there is definitively a touching hyperplane, but for at least one of them there was a hyperplane that we couldn't tell  if it was touching or not.
-        return 0
+        return None
     else:
-        return -1
+        return False
         
         
 
@@ -106,18 +106,18 @@ def same_edge(vertexpair1,vertexpair2):
 
 def in_hull(thepoint,manypoints):
     """
-    Check if a given point is cointained in the convex hull of a collection of points. Return 1 if point is definitely in the hull, -1 if it is definitely not, and 0 if not sure.
+    Check if a given point is cointained in the convex hull of a collection of points. Return True if point is definitely in the hull, False if it is definitely not, and None if not sure.
     """
     c = np.zeros(len(manypoints))
     A = np.r_[np.array(manypoints).T,np.ones((1,len(manypoints)))]
     b = np.r_[thepoint, np.ones(1)]
     lp = linprog(c, A_eq=A, b_eq=b)
     if lp.success==True and lp.status==0:
-        return 1
+        return True
     elif lp.success==False and lp.status==2:
-        return -1
+        return False
     else:
-        return 0
+        return None
 
 
 def touching(vertexlist,tracevector):
@@ -136,9 +136,9 @@ def touching(vertexlist,tracevector):
         if any(np.allclose(np.zeros(v.shape),v) for v in projectedverts):
             continue        
         inhull=in_hull(np.zeros(tracevector.shape),unique_vertices(projectedverts))
-        if inhull==-1:
-            return 1
-        elif inhull==0:
+        if inhull==False:
+            return True
+        elif inhull==None:
             ambiguous=True
     simpleedges=simple_edges(vertexlist)
     # Second check if there is hyperplane touching a simple edge.
@@ -154,14 +154,14 @@ def touching(vertexlist,tracevector):
         if any(np.allclose(np.zeros(v.shape),v) for v in projectedverts):
             continue
         inhull= in_hull(np.zeros(tracevector.shape),unique_vertices(projectedverts)) 
-        if inhull==-1:
-            return 1
-        elif inhull==0:
+        if inhull==False:
+            return True
+        elif inhull==None:
             ambiguous=True
     if ambiguous:
-        return 0
+        return None
     else:
-        return -1
+        return False
 
     
     
