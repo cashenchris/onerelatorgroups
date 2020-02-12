@@ -105,6 +105,9 @@ def is_hyperbolic(relator,reportreason=False,**kwargs):
         if 'gap' in kwargs:
             walrus=checkhyperbolicitywithwalrus(r2.letters,gap=kwargs["gap"],gapfreegroupname=gapfreegroupname,gapprompt=gapprompt,theparameter=walrusparameter)
         else:
+            if 'pathtogap' in kwargs:
+                walrus=checkhyperbolicitywithwalrus(r2.letters,gap=None,gapfreegroupname=gapfreegroupname,gapprompt=gapprompt,theparameter=walrusparameter,pathtogap=kwargs['pathtogap'])
+            else:
             walrus=checkhyperbolicitywithwalrus(r2.letters,gap=None,gapfreegroupname=gapfreegroupname,gapprompt=gapprompt,theparameter=walrusparameter)
         if walrus:
             return format_return(True,'walrus')
@@ -151,14 +154,14 @@ def is_cyclically_pinched(relator,reportwords=False,reportpowers=False):
 
 
 
-def checkhyperbolicitywithwalrus(theword,theparameter='1/100',gap=None,gapfreegroupname='f',gapprompt='gap>',fulloutput=False):
+def checkhyperbolicitywithwalrus(theword,theparameter='1/100',gap=None,gapfreegroupname='f',gapprompt='gap>',fulloutput=False,pathtogap=None):
     """
     Check hyperbolicity of the one relator group with relator defined by theword using the walrus package in GAP.
 
     Input 'gap' should be a pexpect process of GAP with walrus loaded, a free group defined, ready for input. If None, process will be spawned.
     """ 
     if gap is None:
-        gap=spawngapforwalrus(max(abs(x) for x in theword),gapfreegroupname=gapfreegroupname,gapprompt=gapprompt)
+        gap=spawngapforwalrus(max(abs(x) for x in theword),gapfreegroupname=gapfreegroupname,gapprompt=gapprompt,pathtogap=pathtogap)
     gap.send('IsHyperbolic(PregroupPresentationFromFp('+gapfreegroupname+',[],['+converttogapword(theword,gapfreegroupname)+']),'+theparameter+');\r')
     gap.expect(gapprompt)
     output=gap.before
@@ -173,11 +176,15 @@ def checkhyperbolicitywithwalrus(theword,theparameter='1/100',gap=None,gapfreegr
     else:
         return result
 
-def spawngapforwalrus(rank,gapfreegroupname='f',gapprompt='gap>'):
+def spawngapforwalrus(rank,gapfreegroupname='f',gapprompt='gap>',pathtogap=None):
     """
     Sapwns a GAP process, loads package walrus, and defines free group of specified rank.
     """
-    gap=pexpect.spawn('gap -b')
+    # Sometimes pexpect can find gap on its own. If not, specify the full path to gap.
+    if pathtogap is None:
+        gap=pexpect.spawn('gap -b')
+    else:
+        gap=pexpect.spawn(pathtogap+' -b')
     gap.expect(gapprompt)
     gap.send('LoadPackage("walrus");;\r')
     gap.expect(gapprompt)
