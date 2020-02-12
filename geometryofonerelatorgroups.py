@@ -20,28 +20,28 @@ import subprocess32
 # >>> gapinstance=spawngapforwalrus(r)
 # >>> for word in words:
 #             certify_hyperbolicity(word, gap=gapinstance)
-def certify_hyperbolicity(relator,reportreason=False,**kwargs):
+def is_hyperbolic(relator,reportreason=False,**kwargs):
     """
     Check if one-relator group defined by input relator is hyperbolic.
-    Returns 1 if group is known hyperbolic, -1 if known not hyperbolic, 0 if inconclusive.
+    Returns True if group is known hyperbolic, False if known not hyperbolic, None if inconclusive.
 
     If reportreason=True output additionally contains string with name of the method certifying hyperbolicity, or None is all tests are inconclusive.
     tryhard=2 will make kbmag retry several times with random orderings of the generators if the first attempt fails.
 
 
-    >>> certify_hyperbolicity([1,2,3],reportreason=True)
+    >>> is_hyperbolic([1,2,3],reportreason=True)
     (True, 'free')
-    >>> certify_hyperbolicity('bbb',reportreason=True)
+    >>> is_hyperbolic('bbb',reportreason=True)
     (True, 'torsion')
-    >>> certify_hyperbolicity([1,2,-1,-2,3,4,-3,-4],reportreason=True)
+    >>> is_hyperbolic([1,2,-1,-2,3,4,-3,-4],reportreason=True)
     (True, 'cyclically pinched')
-    >>> certify_hyperbolicity('abcabcdeDEdeDE',reportreason=True)
+    >>> is_hyperbolic('abcabcdeDEdeDE',reportreason=True)
     (False, 'cyclically pinched')
-    >>> certify_hyperbolicity('ababcabccabcbcbcbcabcbcbcbcbc',reportreason=True)
+    >>> is_hyperbolic('ababcabccabcbcbcbcabcbcbcbcbc',reportreason=True)
     (True, 'Ivanov Schupp')
-    >>> certify_hyperbolicity('cacbcbcbcabacbcaba',reportreason=True,no_minimization=True) # this example is small cancellation as written but not after minimzation 
+    >>> is_hyperbolic('cacbcbcbcabacbcaba',reportreason=True,no_minimization=True) # this example is small cancellation as written but not after minimzation 
     (True, 'small cancellation')
-    >>> certify_hyperbolicity('CCBBCAAbbcaa',reportreason=True)
+    >>> is_hyperbolic('CCBBCAAbbcaa',reportreason=True)
     (True, 'walrus')
     """
     def format_return(result,reason):
@@ -60,7 +60,7 @@ def certify_hyperbolicity(relator,reportreason=False,**kwargs):
         return format_return(True,'free')
     if F.degree(r2)>1:# one-relator groups with torsion are hyperbolic
         return format_return(True,'torsion')
-    # Check if relarot is cyclically pinched
+    # Check if relator is cyclically pinched
     (m,n)=is_cyclically_pinched(r2,reportpowers=True)
     if m is not None:
         if m>1 and n>1:
