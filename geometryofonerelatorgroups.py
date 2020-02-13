@@ -108,7 +108,7 @@ def is_hyperbolic(relator,reportreason=False,**kwargs):
             if 'pathtogap' in kwargs:
                 walrus=checkhyperbolicitywithwalrus(r2.letters,gap=None,gapfreegroupname=gapfreegroupname,gapprompt=gapprompt,theparameter=walrusparameter,pathtogap=kwargs['pathtogap'])
             else:
-            walrus=checkhyperbolicitywithwalrus(r2.letters,gap=None,gapfreegroupname=gapfreegroupname,gapprompt=gapprompt,theparameter=walrusparameter)
+                walrus=checkhyperbolicitywithwalrus(r2.letters,gap=None,gapfreegroupname=gapfreegroupname,gapprompt=gapprompt,theparameter=walrusparameter)
         if walrus:
             return format_return(True,'walrus')
         if 'verbose' in kwargs and kwargs["verbose"]:
