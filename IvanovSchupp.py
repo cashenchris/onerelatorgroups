@@ -58,6 +58,8 @@ def IvanovSchupp(relator,reportreason=False):
         return format_return(True,'free')
     F,r1=fg.parseinputword(relator)
     r2=F.cyclic_reduce(r1)
+    if r1!=r2:
+        raise ValueError("Input relator is not cyclically reduced.")
     if F.degree(r2)>1:# one-relator groups with torsion are hyperbolic
         return format_return(True,'torsion')
     # Try Ivanov-Schupp criteria
