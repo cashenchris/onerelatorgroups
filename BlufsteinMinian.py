@@ -45,13 +45,13 @@ def BlufsteinMinianTprime(relator):
         return matchingprefixlength
     def overlap(a,b):
         if a[1]==1 and b[1]==1:
-            return longestcommonprefix((Rinv+Rinv)[len(R)-a[0]-1:],(R+R)[b[0]+1:])
+            return longestcommonprefix((R+R)[a[0]+1:],(Rinv+Rinv)[len(R)-1-b[0]:])
         elif a[1]==-1 and b[1]==1:
-            return longestcommonprefix((R+R)[len(R)-a[0]-1:],(R+R)[b[0]+1:])
+            return longestcommonprefix((Rinv+Rinv)[a[0]+1:],(Rinv+Rinv)[len(R)-1-b[0]:])
         elif a[1]==1 and b[1]==-1:
-            return longestcommonprefix((Rinv+Rinv)[len(R)-a[0]-1:],(Rinv+Rinv)[b[0]+1:])
+            return longestcommonprefix((R+R)[a[0]+1:],(R+R)[len(R)-1-b[0]:])
         elif a[1]==-1 and b[1]==-1:
-            return longestcommonprefix((R+R)[len(R)-a[0]-1:],(Rinv+Rinv)[b[0]+1:])
+            return longestcommonprefix((Rinv+Rinv)[a[0]+1:],(R+R)[len(R)-1-b[0]:])
         else:
             raise InputError
     G=nx.Graph(wg.WGraph(rels)) # reduced Whitehead graph with at most one edge between vertices 
