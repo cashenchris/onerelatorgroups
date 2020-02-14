@@ -26,6 +26,8 @@ def BlufsteinMinianTprime(relator):
     True
     >>> BlufsteinMinianTprime('DCabFEcdBAef')
     False
+    >>> BlufsteinMinianTprime([-3,-3,-2,-3,-2,3,-1,-1,-2,-2,-3,1,1])
+    False
     """
     F,rels=fg.parseinputwords([relator])
     rel=F.cyclic_reduce(rels[0])
@@ -54,14 +56,14 @@ def BlufsteinMinianTprime(relator):
             raise InputError
     G=nx.Graph(wg.WGraph(rels)) # reduced Whitehead graph with at most one edge between vertices 
     A=nx.adjacency_matrix(G)
-    B=A**3
     nodelist=list(G.nodes())
+    B=A**3 # the point of B is to cut down the number of combinations in the next line. We only look at vertices that do belong to some 3-cycle.
     threecycles={(nodelist[i],nodelist[j],nodelist[k]) for (i,j,k) in itertools.combinations([h for h in range(len(nodelist)) if B[h,h]!=0],3) if A[i,j] and A[j,k] and A[k,i]} # ordered triples of vertices forming 3-cycle in reduced Whitehead graph
     for (i,j,k) in threecycles:
-        # find possible indices in R and Rinv that could make an interior tripod with vertex at (i,j,k)
-        possiblefirstindex=[(h,1) for h in range(len(R)) if (R+R)[h:h+2]==[-j,i]]+[(h,-1) for h in range(len(R)) if (Rinv+Rinv)[h:h+2]==[-j,i]]
-        possiblesecondindex=[(h,1) for h in range(len(R)) if (R+R)[h:h+2]==[-k,j]]+[(h,-1) for h in range(len(R)) if (Rinv+Rinv)[h:h+2]==[-k,j]]
-        possiblethirdindex=[(h,1) for h in range(len(R)) if (R+R)[h:h+2]==[-i,k]]+[(h,-1) for h in range(len(R)) if (Rinv+Rinv)[h:h+2]==[-i,k]]
+        # find possible indices in R and Rinv that could make an interior tripod with whose vertex has outgoing edges labelled i,j,k
+        possiblefirstindex=[(h,1) for h in range(len(R)) if (R+R)[h:h+2]==[-i,j]]+[(h,-1) for h in range(len(R)) if (Rinv+Rinv)[h:h+2]==[-i,j]] # (h,1) means R[h]=-i and R[h+1]=j, (h,-1) means Rinv[h]=-i and Rinv[h+1]=j; these are all possible turns in the relator that give an edge from i to j in the Whithead graph
+        possiblesecondindex=[(h,1) for h in range(len(R)) if (R+R)[h:h+2]==[-j,k]]+[(h,-1) for h in range(len(R)) if (Rinv+Rinv)[h:h+2]==[-j,k]]
+        possiblethirdindex=[(h,1) for h in range(len(R)) if (R+R)[h:h+2]==[-k,i]]+[(h,-1) for h in range(len(R)) if (Rinv+Rinv)[h:h+2]==[-k,i]]
         for (f,s,t) in itertools.product(possiblefirstindex,possiblesecondindex,possiblethirdindex):
             # for each possible interior tripod, compute its length
             tripodlength=overlap(f,s)+overlap(s,t)+overlap(t,f)
