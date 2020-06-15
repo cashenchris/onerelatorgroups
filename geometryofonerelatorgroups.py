@@ -1,6 +1,6 @@
 import networkx as nx
-import automaticgroups.automaticgroups as ag
-import smallcancellation.smallcancellation as sc
+import automaticgroups as ag
+import smallcancellation as sc
 import freegroups.freegroup as fg
 import freegroups.whiteheadgraph as wg
 from IvanovSchupp import IvanovSchupp
@@ -27,6 +27,8 @@ def is_hyperbolic(relator,reportreason=False,**kwargs):
 
     If reportreason=True output additionally contains string with name of the method certifying hyperbolicity, or None is all tests are inconclusive.
     tryhard=2 will make kbmag retry several times with random orderings of the generators if the first attempt fails.
+
+    pass no_minimization=True to check the relator as given. Otherwise the relator will first be Whitehead minimized.
 
 
     >>> is_hyperbolic([1,2,3],reportreason=True)
